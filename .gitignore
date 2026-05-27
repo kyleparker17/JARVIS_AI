@@ -48,8 +48,10 @@ Thumbs.db
 # Logs
 *.log
 
-# Local data / test files (optional)
+# Local data (do not commit user test files)
 *.csv
 *.xlsx
-!requirements.txt
-!app.py
+*.xls
+
+# Chroma DB (RAG)
+chroma_db/
