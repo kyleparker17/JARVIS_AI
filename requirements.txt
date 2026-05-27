@@ -1,4 +1,4 @@
-# 베리파이 AI v5 - Maximum Multi-Agent + MCP Full Edition
+# 베리파이 AI v5 - Maximum Multi-Agent + Full MCP Edition
 streamlit>=1.32.0
 pandas>=2.0.0
 numpy>=1.24.0

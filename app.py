@@ -41,7 +41,7 @@ st.markdown("""
 st.title("🔎 베리파이 AI v5")
 st.caption("Maximum Multi-Agent + Full MCP | SW기획·개발·AI·DB·경영기획·마케팅·인프라 전 영역")
 
-# ================== SESSION ==================
+# ================== SESSION STATE ==================
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "uploaded_dataframes" not in st.session_state:
@@ -61,14 +61,14 @@ if "vectorstore" not in st.session_state:
 
 @tool
 def list_uploaded_files() -> str:
-    """현재 업로드된 데이터 파일 목록 반환"""
+    """현재 업로드된 데이터 파일 목록을 반환합니다."""
     if not st.session_state.uploaded_dataframes:
-        return "업로드된 데이터 파일이 없습니다."
+        return "현재 업로드된 데이터 파일이 없습니다."
     return "업로드된 파일: " + ", ".join(st.session_state.uploaded_dataframes.keys())
 
 @tool
-def analyze_dataframe(file_name: str, analysis_type: str = "기본 분석") -> str:
-    """CSV/Excel 파일을 분석 (통계, 이상치, 요약 등)"""
+def analyze_dataframe(file_name: str, analysis_request: str = "기본 분석") -> str:
+    """업로드된 CSV/Excel 파일을 분석합니다."""
     if file_name not in st.session_state.uploaded_dataframes:
         return f"'{file_name}' 파일을 찾을 수 없습니다."
     
@@ -76,20 +76,20 @@ def analyze_dataframe(file_name: str, analysis_type: str = "기본 분석") -> s
     result = f"[{file_name}] 분석 결과\n"
     result += f"Shape: {df.shape[0]} rows × {df.shape[1]} columns\n\n"
     
-    if analysis_type in ["기본 분석", "통계"]:
+    if "통계" in analysis_request or "기본" in analysis_request:
         numeric = df.select_dtypes(include=['number'])
         if not numeric.empty:
-            result += "수치형 통계:\n" + numeric.describe().to_string() + "\n\n"
+            result += "수치형 기본 통계:\n" + numeric.describe().to_string() + "\n\n"
     
-    if analysis_type in ["기본 분석", "결측치"]:
+    if "결측치" in analysis_request or "이상치" in analysis_request:
         missing = df.isnull().sum()
-        result += f"결측치:\n{missing[missing > 0].to_string()}\n"
+        result += f"결측치 현황:\n{missing[missing > 0].to_string()}\n"
     
     return result
 
 @tool
 def run_python_code(code: str) -> str:
-    """업로드된 데이터를 활용한 Python 코드 실행"""
+    """업로드된 데이터를 활용하여 Python 코드를 실행합니다."""
     try:
         local_vars = {
             "pd": pd,
@@ -107,34 +107,28 @@ def run_python_code(code: str) -> str:
 
 @tool
 def web_search(query: str) -> str:
-    """DuckDuckGo 웹 검색"""
+    """DuckDuckGo를 사용한 웹 검색"""
     try:
         return DuckDuckGoSearchRun().run(query)
     except Exception as e:
-        return f"검색 실패: {e}"
+        return f"웹 검색 실패: {e}"
 
 @tool
 def mcp_strategy(area: str) -> str:
-    """MCP를 특정 영역에 적용한 실무 전략 제안"""
+    """MCP를 특정 영역(Sw기획, 개발, AI, DB, 경영기획, 마케팅, 인프라)에 적용한 전략을 제안합니다."""
     strategies = {
         "sw기획": "MCP로 GitHub + Jira + Notion + Figma를 하나의 Context로 연결 → 요구사항 자동 추출 → 아키텍처 초안 생성",
-        "개발": "MCP로 로컬 코드베이스 + Docker + PostgreSQL + 모니터링 도구 직접 제어 및 코드 생성",
-        "ai": "여러 Agent(Multi-Agent) 간에 MCP로 지식·도구 공유하며 협업",
+        "개발": "MCP로 로컬 코드베이스 + Docker + PostgreSQL + 모니터링 도구를 직접 제어하며 코드 생성",
+        "ai": "Multi-Agent 간 MCP로 지식과 도구를 공유하며 협업 (Supervisor + Worker 구조)",
         "db": "PostgreSQL, MySQL, MongoDB 등에 실시간 쿼리·스키마 분석·데이터 변환 수행",
-        "경영기획": "ERP + 재무시스템 + HR + BI 도구를 MCP로 연결 → 실시간 경영 대시보드/보고서 생성",
-        "마케팅": "GA4, Meta Ads, CRM, 이메일 도구를 MCP로 통합 → 고객 여정 분석 및 캠페인 자동화",
-        "인프라": "Kubernetes + AWS/GCP + Terraform + Prometheus를 MCP로 제어 → 인프라 코드 생성 및 장애 대응"
+        "경영기획": "ERP + 재무 + HR + BI 도구를 MCP로 연결 → 실시간 경영 대시보드 및 보고서 자동 생성",
+        "마케팅": "GA4 + Meta Ads + CRM + 이메일 마케팅 도구를 MCP로 통합 → 고객 여정 분석 및 캠페인 자동화",
+        "인프라": "Kubernetes + AWS/GCP + Terraform + Prometheus를 MCP로 제어 → 인프라 코드 생성 및 장애 대응 자동화"
     }
-    return strategies.get(area.lower().replace(" ", ""), 
-           "해당 영역에 대한 MCP 적용 전략을 구체적으로 제안합니다. (SW기획/개발/AI/DB/경영기획/마케팅/인프라)")
+    area_key = area.lower().replace(" ", "").replace("기획", "")
+    return strategies.get(area_key, "해당 영역에 대한 MCP 적용 전략을 구체적으로 제안합니다. (sw기획/개발/ai/db/경영기획/마케팅/인프라 중 선택)")
 
-tools = [
-    list_uploaded_files,
-    analyze_dataframe,
-    run_python_code,
-    web_search,
-    mcp_strategy
-]
+tools = [list_uploaded_files, analyze_dataframe, run_python_code, web_search, mcp_strategy]
 
 # ================== SKILLS ==================
 SKILLS = {
@@ -143,8 +137,7 @@ SKILLS = {
     "📊 IT 전략 보고서": "2026년 최신 트렌드를 반영한 고품질 전략 컨설턴트.",
     "💻 Senior Python 개발": "Senior Python Engineer. 안전하고 실무에 바로 적용 가능한 코드를 작성한다.",
     "📑 종합 문서 분석": "RAG와 Multi-Agent를 활용한 깊이 있는 문서+데이터 분석 전문가.",
-    "🚀 MCP Full Specialist": """MCP(Model Context Protocol) 전문가.
-SW기획·개발·AI·DB·경영기획·마케팅·인프라 7개 영역 모두에 MCP를 적용한 실무 전략을 제시한다.""",
+    "🚀 MCP Full Specialist": "MCP(Model Context Protocol) 전문가. SW기획·개발·AI·DB·경영기획·마케팅·인프라 7개 영역 모두에 MCP를 적용한 실무 전략을 제시한다.",
     "🧠 Multi-Agent Supervisor": "여러 전문 에이전트(Data Analyst, Code Engineer, MCP Strategist, Report Writer)를 조율하여 종합 결과를 만든다."
 }
 
@@ -156,11 +149,11 @@ with st.sidebar:
     
     selected_skill = st.selectbox("Skill", list(SKILLS.keys()))
     use_tools = st.checkbox("Tool Calling 활성화", value=True)
-    use_mcp = st.checkbox("MCP Full Mode", value=True)
-    
+    use_mcp = st.checkbox("MCP Full Mode (7대 영역)", value=True)
+
     st.divider()
-    st.caption("MCP 지원: SW기획 · 개발 · AI · DB · 경영기획 · 마케팅 · 인프라")
-    
+    st.caption("MCP 지원 영역: SW기획 · 개발 · AI · DB · 경영기획 · 마케팅 · 인프라")
+
     if st.button("🗑️ 대화 초기화", use_container_width=True):
         st.session_state.messages = []
         st.session_state.uploaded_dataframes = {}
@@ -192,7 +185,7 @@ for msg in st.session_state.messages:
         css = "chat-bubble-user" if msg["role"] == "user" else "chat-bubble-assistant"
         st.markdown(f'<div class="{css}">{msg["content"]}</div>', unsafe_allow_html=True)
 
-# ================== INPUT ==================
+# ================== USER INPUT ==================
 if prompt := st.chat_input("MCP Multi-Agent에게 요청하세요..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     
@@ -243,17 +236,17 @@ MCP 관련 요청이 오면 mcp_strategy 도구를 적극 사용하라.
             full_response = response
 
         except Exception as e:
-            full_response = f"오류: {str(e)}"
+            full_response = f"오류가 발생했습니다: {str(e)}"
             placeholder.error(full_response)
 
         st.session_state.messages.append({"role": "assistant", "content": full_response})
         st.session_state.last_response = full_response
 
         # Thinking 표시
-        thinking, _ = re.search(r"<thinking>(.*?)</thinking>", full_response, re.DOTALL | re.IGNORECASE) or (None, None)
-        if thinking:
+        thinking_match = re.search(r"<thinking>(.*?)</thinking>", full_response, re.DOTALL | re.IGNORECASE)
+        if thinking_match:
             with st.expander("💭 Chain of Thought"):
-                st.markdown(thinking.group(1).strip() if hasattr(thinking, 'group') else thinking)
+                st.markdown(thinking_match.group(1).strip())
 
 # ================== EXPORT ==================
 if st.session_state.last_response:
@@ -273,11 +266,10 @@ if st.session_state.last_response:
             bio = io.BytesIO()
             doc.save(bio)
             bio.seek(0)
-            st.download_button("DOCX 다운로드", bio.getvalue(), 
-                              f"베리파이AI_v5_{ts}.docx", 
+            st.download_button("DOCX 다운로드", bio.getvalue(), f"베리파이AI_v5_{ts}.docx", 
                               "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                               use_container_width=True)
     
     with col3:
         if st.button("📊 PPTX", use_container_width=True):
-            st.info("PPTX 자동 생성은 v5에서 준비 중입니다. (Markdown → PPTX 변환 추천)")
+            st.info("PPTX 자동 생성은 준비 중입니다. (Markdown 변환 추천)")
