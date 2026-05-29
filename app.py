@@ -185,7 +185,7 @@ with st.sidebar:
     st.session_state.multi_agent_mode = st.toggle("Multi-Agent Mode", value=st.session_state.get("multi_agent_mode", True))
 
     if st.button("🔄 Orchestrator 전환 (24B ↔ 14B)"):
-        st.session_state.active_orchestrator = "phi-4:14b" if model == "mistral-small:24b" else "mistral-small:24b"
+        st.session_state.active_orchestrator = "phi4:14b" if model == "mistral-small:24b" else "mistral-small:24b"
         st.rerun()
 
     # === 채팅목록 + 새채팅 만들기 ===
@@ -276,7 +276,7 @@ with col_input:
 
 with col_model:
     active_model = st.selectbox(
-        "모델", ["mistral-small:24b", "phi-4:14b"], index=0,
+        "모델", ["mistral-small:24b", "phi4:14b"], index=0,
         label_visibility="collapsed", key="composer_model"
     )
 
