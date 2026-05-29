@@ -37,13 +37,44 @@ Main Orchestrator (24B) + Specialized Agents (8B/9B)
 
 ## 🚀 실행 방법
 
+### 처음 설치하는 경우 (최초 1회)
+
+> **사전 준비**: [Python 3.11+](https://python.org), [Node.js 18+](https://nodejs.org), [Ollama](https://ollama.com) 설치 필요
+
 ```powershell
-cd C:\Users\user\KS\IT_Assistant
-.\.venv\Scripts\Activate.ps1
+# 1. 프로젝트 폴더로 이동
+cd C:\Users\사용자이름\KS\IT_Assistant   # 본인 경로로 수정
+
+# 2. Python 가상환경 생성
+python -m venv .venv
+
+# 3. PowerShell 실행 권한 허용 (최초 1회, 관리자 불필요)
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+
+# 4. 패키지 설치
+.\.venv\Scripts\pip install -r requirements.txt
+
+# 5. Ollama 모델 다운로드 (용량 큼 — 처음에만)
+ollama pull mistral-small:24b   # ~14GB, 메인 모델
+ollama pull phi-4:14b           # ~8GB,  보조 모델
+```
+
+### 이후 실행 (매번)
+
+```powershell
 npm run dev
 ```
 
-또는 `start.bat` 더블클릭
+> `npm run dev`는 `.venv` 안의 Python을 직접 사용합니다. 가상환경 활성화 불필요.  
+> 또는 `start.bat` 더블클릭으로도 실행 가능.
+
+### 설치가 잘 안 될 때
+
+```powershell
+# pip 업그레이드 후 재시도
+.\.venv\Scripts\python -m pip install --upgrade pip
+.\.venv\Scripts\pip install -r requirements.txt
+```
 
 ---
 
