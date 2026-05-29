@@ -296,6 +296,10 @@ with _pc:
             "파일 업로드", type=["pdf","docx","txt","md","csv","xlsx"],
             key="composer_file"
         )
+        pdf_path = st.text_input(
+            "PDF 경로 직접 입력", placeholder="C:\\Users\\...\\file.pdf",
+            key="pdf_path_input"
+        )
         selected_skill = st.selectbox("스킬", list(SKILLS.keys()), key="composer_skill")
 
 with st.form(key="chat_form", clear_on_submit=True):
@@ -324,6 +328,14 @@ if send and prompt and prompt.strip() and not st.session_state.get("_processing"
     ctx = ""
     if uploaded_file:
         ctx += f"\n\n[Attached: {uploaded_file.name}]\n{extract_text_from_file(uploaded_file)[:4000]}"
+    pdf_path = st.session_state.get("pdf_path_input", "")
+    if pdf_path and os.path.isfile(pdf_path):
+        try:
+            with open(pdf_path, "rb") as _f:
+                _pdf_text = "\n".join(p.extract_text() or "" for p in PdfReader(_f).pages)
+            ctx += f"\n\n[PDF: {os.path.basename(pdf_path)}]\n{_pdf_text[:8000]}"
+        except Exception as _e:
+            ctx += f"\n\n[PDF 읽기 오류: {_e}]"
     if st.session_state.watch_files:
         ctx += "\n\n[Watch Folder]\n" + "\n".join(
             [f"--- {f['name']} ---\n{f['content']}" for f in st.session_state.watch_files]
