@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from datetime import datetime
 from docx import Document
 import io
@@ -244,23 +245,52 @@ SKILLS = {
 # ====================== 채팅 영역 (스크롤 고정 박스) ======================
 current_chat = get_current_chat()
 
-chat_box = st.container(height=560, border=True)
-with chat_box:
-    for msg in current_chat["messages"]:
-        if msg["role"] == "user":
-            with st.chat_message("user", avatar="👤"):
-                st.markdown(f'<div class="chat-message user-message">{msg["content"]}</div>', unsafe_allow_html=True)
-        else:
-            with st.chat_message("assistant", avatar="🔎"):
-                st.markdown(f'<div class="chat-message assistant-message">{msg["content"]}</div>', unsafe_allow_html=True)
+# 메시지를 HTML로 조립 후 스크롤 div 안에 렌더링
+msgs_html = ""
+for msg in current_chat["messages"]:
+    if msg["role"] == "user":
+        msgs_html += f'<div class="chat-message user-message">👤 {msg["content"]}</div>'
+    else:
+        msgs_html += f'<div class="chat-message assistant-message">🔎 {msg["content"]}</div>'
+
+if not msgs_html:
+    msgs_html = '<p style="color:#555;text-align:center;margin-top:30px;">대화를 시작하세요</p>'
+
+chat_html = f"""
+<!DOCTYPE html><html><head><style>
+  body {{ margin:0; background:#111318; }}
+  .chat-message {{
+    padding:13px 19px; border-radius:20px; margin-bottom:10px;
+    max-width:78%; line-height:1.65; font-size:0.95rem;
+    box-shadow:0 3px 14px rgba(0,0,0,0.35);
+    color:#e6e8ef; word-break:break-word;
+  }}
+  .user-message {{
+    background:linear-gradient(135deg,#1f2433 0%,#181c28 100%);
+    border:1px solid rgba(0,212,255,0.18);
+    border-bottom-right-radius:5px; margin-left:auto;
+  }}
+  .assistant-message {{
+    background:#1c1e27; border:1px solid rgba(0,255,157,0.15);
+    border-bottom-left-radius:5px;
+  }}
+  #box {{
+    height:540px; overflow-y:auto; padding:16px 12px;
+    display:flex; flex-direction:column; gap:4px;
+  }}
+  ::-webkit-scrollbar {{ width:6px; }}
+  ::-webkit-scrollbar-thumb {{ background:#2b2e3a; border-radius:6px; }}
+</style></head><body>
+<div id="box">{msgs_html}</div>
+<script>var b=document.getElementById('box');if(b)b.scrollTop=b.scrollHeight;</script>
+</body></html>
+"""
+components.html(chat_html, height=560, scrolling=False)
 
 # ====================== Composer (하단) — 파일+스킬 → 채팅창 → 모델 → 전송 ======================
-col_attach, col_input, col_model, col_send = st.columns(
-    [0.08, 0.64, 0.20, 0.08], vertical_alignment="center"
-)
-
-with col_attach:
-    with st.popover("➕", use_container_width=True):
+_pc, _ = st.columns([0.13, 0.87])
+with _pc:
+    with st.popover("➕ 파일/스킬", use_container_width=True):
         st.caption("파일 + 스킬")
         uploaded_file = st.file_uploader(
             "파일 업로드", type=["pdf","docx","txt","md","csv","xlsx"],
@@ -268,23 +298,23 @@ with col_attach:
         )
         selected_skill = st.selectbox("스킬", list(SKILLS.keys()), key="composer_skill")
 
-with col_input:
-    prompt = st.text_input(
-        "메시지", placeholder="Message JARVIS...", label_visibility="collapsed",
-        key=f"chat_input_{st.session_state.composer_nonce}"
-    )
-
-with col_model:
-    active_model = st.selectbox(
-        "모델", ["mistral-small:24b", "phi4:14b"], index=0,
-        label_visibility="collapsed", key="composer_model"
-    )
-
-with col_send:
-    send = st.button("전송", use_container_width=True, type="primary")
+with st.form(key="chat_form", clear_on_submit=True):
+    col_input, col_model, col_send = st.columns([0.72, 0.20, 0.08], vertical_alignment="center")
+    with col_input:
+        prompt = st.text_input(
+            "메시지", placeholder="Message JARVIS...  (Enter로 전송)", label_visibility="collapsed"
+        )
+    with col_model:
+        active_model = st.selectbox(
+            "모델", ["mistral-small:24b", "phi4:14b"], index=0,
+            label_visibility="collapsed"
+        )
+    with col_send:
+        send = st.form_submit_button("전송", use_container_width=True, type="primary")
 
 # ====================== 입력 처리 ======================
-if send and prompt and prompt.strip():
+if send and prompt and prompt.strip() and not st.session_state.get("_processing", False):
+    st.session_state._processing = True
     # mtime 변경 감지 → 자동 재스캔 (실시간급)
     if st.session_state.watch_path and st.session_state.watch_mtimes:
         if any(os.path.getmtime(p) != st.session_state.watch_mtimes.get(p, 0)
@@ -304,6 +334,7 @@ if send and prompt and prompt.strip():
     try:
         llm = ChatOllama(model=active_model, temperature=0.25, num_predict=8192)
         system = SKILLS.get(selected_skill, SKILLS["기본"])
+        system += " 반드시 한국어로 답변하세요."
         if st.session_state.get("multi_agent_mode", True):
             system += " Coordinate your expert agents to give the best possible answer."
         full_response = llm.invoke(system + ctx + "\n\nUser: " + prompt).content
@@ -313,5 +344,5 @@ if send and prompt and prompt.strip():
     current_chat["messages"].append({"role": "assistant", "content": full_response})
     if current_chat["title"] == "New Chat" and len(current_chat["messages"]) == 2:
         current_chat["title"] = prompt[:28]
-    st.session_state.composer_nonce += 1
+    st.session_state._processing = False
     st.rerun()
