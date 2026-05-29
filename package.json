@@ -1,0 +1,12 @@
+{
+  "name": "jarvis-ai",
+  "version": "7.0.0",
+  "description": "JARVIS v7 (Multi-Chat + File Upload in Chat + Reasoning Process | Fully Local Ollama)",
+  "scripts": {
+    "dev": ".venv\\Scripts\\python -m streamlit run app.py",
+    "start": ".venv\\Scripts\\python -m streamlit run app.py",
+    "install": "pip install -r requirements.txt"
+  },
+  "author": "츠키토",
+  "license": "MIT"
+}

@@ -1,4 +1,4 @@
-# 베리파이 AI v5 - Maximum Multi-Agent + Full MCP Edition
+# JARVIS v7 - Multi-Agent Edition (24B Orchestrator + Specialized Agents)
 streamlit>=1.32.0
 pandas>=2.0.0
 numpy>=1.24.0
@@ -7,12 +7,14 @@ openpyxl>=3.1.0
 # LangChain + Agents + Tools
 langchain>=0.2.0
 langchain-core>=0.3.0
+langchain-classic>=1.0.0
 langchain-ollama>=0.1.0
 langchain-community>=0.2.0
 
-# RAG
+# RAG + Document Loaders
 langchain-chroma>=0.1.0
 chromadb>=0.4.0
+pypdf>=4.2.0
 
 # Tools
 duckduckgo-search>=0.3.0

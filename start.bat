@@ -1,32 +1,34 @@
 @echo off
-chcp 65001 >nul
-cd /d %~dp0
+chcp 65001 >nul 2>&1
+cd /d "%~dp0"
 
 echo ========================================
-echo   베리파이 AI (Verify AI) 실행
+echo   JARVIS v7
+echo   Multi-Agent Edition (24B Orchestrator)
 echo ========================================
 echo.
 
-if not exist ".venv\Scripts\activate.bat" (
-    echo [오류] 가상환경이 존재하지 않습니다.
-    echo 먼저 다음 명령을 실행하세요:
+if not exist ".venv\Scripts\python.exe" (
+    echo [오류] 가상환경(.venv)이 없습니다.
     echo.
+    echo 먼저 다음 명령을 실행하세요:
     echo   python -m venv .venv
-    echo   .venv\Scripts\activate
     echo   pip install -r requirements.txt
     echo.
     pause
-    exit /b
+    exit /b 1
 )
 
 echo 가상환경 활성화 중...
-call .venv\Scripts\activate.bat
+call ".venv\Scripts\activate.bat" >nul 2>&1
 
 echo.
-echo 베리파이 AI를 시작합니다...
-echo 브라우저가 자동으로 열립니다.
+echo JARVIS v7 시작 중...
+echo 브라우저가 곧 열립니다.
 echo.
 
-python -m streamlit run app.py
+".venv\Scripts\python.exe" -m streamlit run app.py
 
-pause
+echo.
+echo 종료하려면 아무 키나 누르세요.
+pause >nul

@@ -1,10 +1,10 @@
 [theme]
 # Futuristic Dark Theme for IT Assistant
 base = "dark"
-primaryColor = "#00e5ff"
-backgroundColor = "#0b0c10"
-secondaryBackgroundColor = "#14161f"
-textColor = "#e0e6f0"
+primaryColor = "#00ff9d"
+backgroundColor = "#0a0a0f"
+secondaryBackgroundColor = "#15171f"
+textColor = "#e6e8ef"
 font = "sans-serif"
 
 [server]
